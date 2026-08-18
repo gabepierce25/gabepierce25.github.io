@@ -1,9 +1,12 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const CELL = 50;
-const COLS = canvas.width / CELL;
-const ROWS = canvas.height / CELL;
+const isMobile = window.matchMedia("(pointer: coarse)").matches;
+const CELL = isMobile ? 70 : 50;
+const COLS = isMobile ? 6 : 16;
+const ROWS = isMobile ? 9 : 16;
+canvas.width = COLS * CELL;
+canvas.height = ROWS * CELL;
 const MOVE_MS_START = 160;
 const MOVE_MS_MIN = 90;
 
@@ -17,9 +20,14 @@ const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
 
 const faceImg = new Image();
-faceImg.src = "assets/face.jpg";
+faceImg.src = "assets/gabe.jpg";
 let faceLoaded = false;
 faceImg.onload = () => (faceLoaded = true);
+
+const foodImg = new Image();
+foodImg.src = "assets/lea.jpg";
+let foodLoaded = false;
+foodImg.onload = () => (foodLoaded = true);
 
 const DIRS = {
   ArrowUp: { x: 0, y: -1 },
@@ -35,10 +43,12 @@ const DIRS = {
 let snake, direction, nextDirection, food, score, best, moveMs, timer, running;
 
 function init() {
+  const startX = Math.max(2, Math.floor(COLS / 2));
+  const startY = Math.floor(ROWS / 2);
   snake = [
-    { x: 8, y: 10 },
-    { x: 7, y: 10 },
-    { x: 6, y: 10 },
+    { x: startX, y: startY },
+    { x: startX - 1, y: startY },
+    { x: startX - 2, y: startY },
   ];
   direction = { x: 1, y: 0 };
   nextDirection = direction;
@@ -112,7 +122,7 @@ function gameOver() {
   } else {
     overlayTitle.textContent = "Game Over";
   }
-  overlayMsg.textContent = `You scored ${score} slice${score === 1 ? "" : "s"}.`;
+  overlayMsg.textContent = `You caught Lea ${score} time${score === 1 ? "" : "s"}.`;
   overlay.classList.add("show");
 }
 
@@ -120,10 +130,23 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // food
-  ctx.font = `${CELL - 2}px serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("🍕", food.x * CELL + CELL / 2, food.y * CELL + CELL / 2 + 1);
+  const fcx = food.x * CELL + CELL / 2;
+  const fcy = food.y * CELL + CELL / 2;
+  const fr = CELL / 2 - 1;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(fcx, fcy, fr, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+
+  if (foodLoaded) {
+    ctx.drawImage(foodImg, fcx - fr, fcy - fr, fr * 2, fr * 2);
+  } else {
+    ctx.fillStyle = "#e63946";
+    ctx.fillRect(fcx - fr, fcy - fr, fr * 2, fr * 2);
+  }
+  ctx.restore();
 
   // body
   for (let i = snake.length - 1; i >= 1; i--) {
