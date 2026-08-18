@@ -3,9 +3,165 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
+    <title>Gabe Snake</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: #1a1a2e;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #f5f5f5;
+        padding: 24px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      #scoreboard {
+        display: flex;
+        gap: 24px;
+        font-size: 18px;
+      }
+
+      #scoreboard span {
+        font-weight: 700;
+        color: #ffb703;
+      }
+
+      #board-wrap {
+        position: relative;
+      }
+
+      canvas {
+        background: #16213e;
+        border: 4px solid #0f3460;
+        border-radius: 8px;
+        display: block;
+      }
+
+      #overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: rgba(0, 0, 0, 0.75);
+        border-radius: 8px;
+        text-align: center;
+        padding: 16px;
+      }
+
+      #overlay.show {
+        display: flex;
+      }
+
+      #overlay h2 {
+        margin: 0;
+        font-size: 26px;
+      }
+
+      #start-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: rgba(0, 0, 0, 0.85);
+        border-radius: 8px;
+        text-align: center;
+        padding: 16px;
+      }
+
+      #start-overlay.hide {
+        display: none;
+      }
+
+      #start-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      #start-preview img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #ffb703;
+      }
+
+      #start-preview .pizza {
+        font-size: 64px;
+      }
+
+      #start-overlay h2 {
+        margin: 0;
+        font-size: 26px;
+      }
+
+      button {
+        font-size: 16px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        background: #ffb703;
+        color: #1a1a2e;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #ffc93a;
+      }
+
+      #controls {
+        font-size: 14px;
+        color: #a0a0c0;
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
-    <h1>My Website</h1>
+    <h1>🍕 Gabe Snake 🍕</h1>
+    <div id="scoreboard">
+      <div>Score: <span id="score">0</span></div>
+      <div>Best: <span id="best">0</span></div>
+    </div>
+    <div id="board-wrap">
+      <canvas id="game" width="640" height="640"></canvas>
+      <div id="overlay">
+        <h2 id="overlay-title">Game Over</h2>
+        <p id="overlay-msg"></p>
+        <button id="restart-btn">Play Again</button>
+      </div>
+      <div id="start-overlay">
+        <div id="start-preview">
+          <img src="assets/face.jpg" alt="Gabe's face">
+          <span class="pizza">🍕</span>
+        </div>
+        <h2>Gabe Snake</h2>
+        <p>Eat the pizza. Don't bite yourself.</p>
+        <button id="start-btn">Start Game</button>
+      </div>
+    </div>
+    <p id="controls">Use arrow keys or WASD to move. Eat the pizza, don't bite yourself.</p>
+
+    <script src="snake.js"></script>
   </body>
 </html>
