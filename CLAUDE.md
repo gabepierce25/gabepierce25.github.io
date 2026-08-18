@@ -24,7 +24,7 @@ The domain `gabepierce.com` is registered with **Squarespace**, not GitHub or a 
 
 ## Site structure
 
-- `index.html` — the whole page (currently: the Snake game). Includes favicon links and Open Graph / Twitter Card meta tags.
+- `index.html` — the whole page (currently: the Snake game). Includes favicon links and Open Graph / Twitter Card meta tags. Loads `snake.js` with a `?v=N` cache-busting query string — **bump this number any time `snake.js` changes**. Without it, returning visitors' browsers can keep serving a stale cached copy of the JS against the new HTML, causing mismatched-version bugs (this happened once: an old cached JS referenced a removed leaderboard input field and threw mid-`init()`, leaving the board blank after clicking Start).
 - `snake.js` — all game logic.
 - `assets/`
   - `gabe.jpg` — Gabe's face, square-cropped, used as the snake's head (circle-clipped in canvas) and in favicons/OG image.
