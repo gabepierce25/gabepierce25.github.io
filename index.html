@@ -41,7 +41,7 @@
 
       #board-wrap {
         position: relative;
-        width: min(840px, 92vw);
+        width: min(800px, 90vw);
         aspect-ratio: 1 / 1;
       }
 
@@ -55,33 +55,16 @@
         touch-action: none;
       }
 
-      #dpad {
+      #controls-touch {
         display: none;
-        grid-template-columns: repeat(3, 64px);
-        grid-template-rows: repeat(3, 64px);
-        gap: 6px;
-        justify-content: center;
       }
-
-      #dpad button {
-        font-size: 24px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      #dpad-up { grid-column: 2; grid-row: 1; }
-      #dpad-left { grid-column: 1; grid-row: 2; }
-      #dpad-right { grid-column: 3; grid-row: 2; }
-      #dpad-down { grid-column: 2; grid-row: 3; }
 
       @media (pointer: coarse) {
-        #dpad {
-          display: grid;
-        }
         #controls {
           display: none;
+        }
+        #controls-touch {
+          display: block;
         }
         body {
           padding: 12px;
@@ -186,7 +169,7 @@
       <div>Best: <span id="best">0</span></div>
     </div>
     <div id="board-wrap">
-      <canvas id="game" width="840" height="840"></canvas>
+      <canvas id="game" width="800" height="800"></canvas>
       <div id="overlay">
         <h2 id="overlay-title">Game Over</h2>
         <p id="overlay-msg"></p>
@@ -203,12 +186,7 @@
       </div>
     </div>
     <p id="controls">Use arrow keys or WASD to move. Eat the pizza, don't bite yourself.</p>
-    <div id="dpad">
-      <button id="dpad-up">&uarr;</button>
-      <button id="dpad-left">&larr;</button>
-      <button id="dpad-right">&rarr;</button>
-      <button id="dpad-down">&darr;</button>
-    </div>
+    <p id="controls-touch">Swipe up, down, left, or right on the board to move. Eat the pizza, don't bite yourself.</p>
 
     <script src="snake.js"></script>
   </body>

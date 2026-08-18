@@ -1,11 +1,11 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const CELL = 40;
+const CELL = 50;
 const COLS = canvas.width / CELL;
 const ROWS = canvas.height / CELL;
-const MOVE_MS_START = 200;
-const MOVE_MS_MIN = 110;
+const MOVE_MS_START = 160;
+const MOVE_MS_MIN = 90;
 
 const scoreEl = document.getElementById("score");
 const bestEl = document.getElementById("best");
@@ -180,12 +180,6 @@ startBtn.addEventListener("click", () => {
   startOverlay.classList.add("hide");
   init();
 });
-
-// on-screen d-pad
-document.getElementById("dpad-up").addEventListener("click", () => setDirection({ x: 0, y: -1 }));
-document.getElementById("dpad-down").addEventListener("click", () => setDirection({ x: 0, y: 1 }));
-document.getElementById("dpad-left").addEventListener("click", () => setDirection({ x: -1, y: 0 }));
-document.getElementById("dpad-right").addEventListener("click", () => setDirection({ x: 1, y: 0 }));
 
 // swipe gestures
 let touchStart = null;
