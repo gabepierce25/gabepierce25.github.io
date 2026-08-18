@@ -2,13 +2,13 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 const isMobile = window.matchMedia("(pointer: coarse)").matches;
-const CELL = isMobile ? 70 : 50;
-const COLS = isMobile ? 6 : 16;
-const ROWS = isMobile ? 9 : 16;
+const CELL = isMobile ? 60 : 50;
+const COLS = isMobile ? 8 : 16;
+const ROWS = isMobile ? 12 : 16;
 canvas.width = COLS * CELL;
 canvas.height = ROWS * CELL;
-const MOVE_MS_START = 160;
-const MOVE_MS_MIN = 90;
+const MOVE_MS_START = isMobile ? 190 : 160;
+const MOVE_MS_MIN = isMobile ? 110 : 90;
 
 const scoreEl = document.getElementById("score");
 const bestEl = document.getElementById("best");
