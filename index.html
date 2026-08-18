@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gabe Snake</title>
+    <meta name="description" content="Catch Lea, don't bite yourself. A snake game starring Gabe and Lea.">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Gabe Snake">
+    <meta property="og:description" content="Catch Lea, don't bite yourself.">
+    <meta property="og:image" content="https://gabepierce.com/assets/og-image.jpg">
+    <meta property="og:url" content="https://gabepierce.com">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Gabe Snake">
+    <meta name="twitter:description" content="Catch Lea, don't bite yourself.">
+    <meta name="twitter:image" content="https://gabepierce.com/assets/og-image.jpg">
     <style>
       * {
         box-sizing: border-box;
@@ -166,10 +182,110 @@
         background: #ffc93a;
       }
 
+      button.secondary {
+        background: transparent;
+        border: 2px solid #ffb703;
+        color: #ffb703;
+      }
+
+      button.secondary:hover {
+        background: rgba(255, 183, 3, 0.15);
+      }
+
       #controls {
         font-size: 14px;
         color: #a0a0c0;
         text-align: center;
+      }
+
+      .score-submit {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .score-submit input {
+        font-size: 15px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 2px solid #0f3460;
+        background: #0f1730;
+        color: #f5f5f5;
+        width: 140px;
+      }
+
+      #submit-status {
+        font-size: 13px;
+        color: #ffb703;
+        min-height: 16px;
+        margin: 0;
+      }
+
+      #leaderboard-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.85);
+        padding: 16px;
+        z-index: 100;
+      }
+
+      #leaderboard-modal.show {
+        display: flex;
+      }
+
+      #leaderboard-panel {
+        background: #16213e;
+        border: 4px solid #0f3460;
+        border-radius: 12px;
+        padding: 20px;
+        width: 100%;
+        max-width: 380px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      #leaderboard-panel h2 {
+        margin: 0;
+        text-align: center;
+      }
+
+      #leaderboard-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto;
+      }
+
+      #leaderboard-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 6px;
+        border-bottom: 1px solid #263159;
+        font-size: 15px;
+      }
+
+      #leaderboard-list li:first-child {
+        color: #ffb703;
+        font-weight: 700;
+      }
+
+      #leaderboard-list .rank {
+        color: #a0a0c0;
+        width: 24px;
+        flex-shrink: 0;
+      }
+
+      #leaderboard-list .lb-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     </style>
   </head>
@@ -184,7 +300,13 @@
       <div id="overlay">
         <h2 id="overlay-title">Game Over</h2>
         <p id="overlay-msg"></p>
+        <div class="score-submit">
+          <input id="name-input" type="text" maxlength="20" placeholder="Your name">
+          <button id="submit-score-btn">Submit</button>
+        </div>
+        <p id="submit-status"></p>
         <button id="restart-btn">Play Again</button>
+        <button id="view-leaderboard-btn" class="secondary">View Leaderboard</button>
       </div>
       <div id="start-overlay">
         <div id="start-preview">
@@ -195,6 +317,15 @@
         <h2>Gabe Snake</h2>
         <p>Catch Lea. Don't bite yourself.</p>
         <button id="start-btn">Start Game</button>
+        <button id="start-view-leaderboard-btn" class="secondary">View Leaderboard</button>
+      </div>
+    </div>
+
+    <div id="leaderboard-modal">
+      <div id="leaderboard-panel">
+        <h2>🏆 Leaderboard</h2>
+        <ol id="leaderboard-list"></ol>
+        <button id="leaderboard-close">Close</button>
       </div>
     </div>
     <p id="controls">Use arrow keys or WASD to move. Catch Lea, don't bite yourself.</p>

@@ -18,6 +18,17 @@ const overlayMsg = document.getElementById("overlay-msg");
 const restartBtn = document.getElementById("restart-btn");
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
+const nameInput = document.getElementById("name-input");
+const submitScoreBtn = document.getElementById("submit-score-btn");
+const submitStatus = document.getElementById("submit-status");
+const viewLeaderboardBtn = document.getElementById("view-leaderboard-btn");
+const startViewLeaderboardBtn = document.getElementById("start-view-leaderboard-btn");
+const leaderboardModal = document.getElementById("leaderboard-modal");
+const leaderboardList = document.getElementById("leaderboard-list");
+const leaderboardClose = document.getElementById("leaderboard-close");
+
+const DREAMLO_PUBLIC = "6a8407818f40bb13506aaddf";
+const DREAMLO_PRIVATE = "PFnobKwHlkeGIYXbaTkgmgDuRmmyqOaEabai_kAEXpKw";
 
 const faceImg = new Image();
 faceImg.src = "assets/gabe.jpg";
@@ -41,6 +52,7 @@ const DIRS = {
 };
 
 let snake, direction, nextDirection, food, score, best, moveMs, timer, running;
+let scoreSubmitted = false;
 
 function init() {
   const startX = Math.max(2, Math.floor(COLS / 2));
@@ -59,6 +71,10 @@ function init() {
   bestEl.textContent = best;
   placeFood();
   overlay.classList.remove("show");
+  scoreSubmitted = false;
+  nameInput.value = "";
+  submitStatus.textContent = "";
+  submitScoreBtn.disabled = false;
   running = true;
   clearInterval(timer);
   timer = setInterval(tick, moveMs);
@@ -192,6 +208,7 @@ function setDirection(dir) {
 }
 
 window.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
   const dir = DIRS[e.key];
   if (!dir) return;
   e.preventDefault();
@@ -238,3 +255,94 @@ canvas.addEventListener("touchend", (e) => {
     setDirection(dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
   }
 });
+
+// leaderboard
+// dreamlo's free tier only serves plain http, which browsers block from an
+// https page (mixed content) — route through a CORS/https proxy instead.
+const DREAMLO_PROXY = "https://api.allorigins.win/get?url=";
+
+async function fetchWithTimeout(url, ms) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function dreamloProxyFetch(targetUrl) {
+  const res = await fetchWithTimeout(DREAMLO_PROXY + encodeURIComponent(targetUrl), 15000);
+  const wrapper = await res.json();
+  return wrapper.contents;
+}
+
+async function submitScore(name, points) {
+  const target = `http://dreamlo.com/lb/${DREAMLO_PRIVATE}/add/${encodeURIComponent(name)}/${points}`;
+  const text = await dreamloProxyFetch(target);
+  if (!text || text.trim() !== "OK") throw new Error(text);
+}
+
+async function loadLeaderboard() {
+  leaderboardList.innerHTML = "<li>Loading…</li>";
+  try {
+    const target = `http://dreamlo.com/lb/${DREAMLO_PUBLIC}/json`;
+    const contents = await dreamloProxyFetch(target);
+    const data = JSON.parse(contents);
+    const raw = data && data.dreamlo && data.dreamlo.leaderboard ? data.dreamlo.leaderboard.entry : null;
+    let entries = raw ? (Array.isArray(raw) ? raw : [raw]) : [];
+    entries = entries
+      .map((e) => ({ name: e.name, score: Number(e.score) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    if (entries.length === 0) {
+      leaderboardList.innerHTML = "<li>No scores yet. Be the first!</li>";
+      return;
+    }
+
+    leaderboardList.innerHTML = entries
+      .map(
+        (e, i) =>
+          `<li><span class="rank">#${i + 1}</span><span class="lb-name">${escapeHtml(e.name)}</span><span>${e.score}</span></li>`
+      )
+      .join("");
+  } catch (err) {
+    leaderboardList.innerHTML = "<li>Couldn't load leaderboard. Try again later.</li>";
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function openLeaderboard() {
+  leaderboardModal.classList.add("show");
+  loadLeaderboard();
+}
+
+submitScoreBtn.addEventListener("click", async () => {
+  const name = nameInput.value.trim();
+  if (!name) {
+    submitStatus.textContent = "Enter a name first.";
+    return;
+  }
+  if (scoreSubmitted) return;
+
+  submitScoreBtn.disabled = true;
+  submitStatus.textContent = "Submitting…";
+  try {
+    await submitScore(name, score);
+    scoreSubmitted = true;
+    submitStatus.textContent = "Score submitted!";
+  } catch (err) {
+    submitStatus.textContent = "Couldn't submit score. Try again.";
+    submitScoreBtn.disabled = false;
+  }
+});
+
+viewLeaderboardBtn.addEventListener("click", openLeaderboard);
+startViewLeaderboardBtn.addEventListener("click", openLeaderboard);
+leaderboardClose.addEventListener("click", () => leaderboardModal.classList.remove("show"));
