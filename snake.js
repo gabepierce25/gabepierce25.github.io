@@ -1,7 +1,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const CELL = 32;
+const CELL = 40;
 const COLS = canvas.width / CELL;
 const ROWS = canvas.height / CELL;
 const MOVE_MS_START = 200;
@@ -161,18 +161,63 @@ function draw() {
   ctx.restore();
 }
 
-window.addEventListener("keydown", (e) => {
-  const dir = DIRS[e.key];
-  if (!dir) return;
-  e.preventDefault();
+function setDirection(dir) {
   if (!running) return;
   // prevent reversing directly into yourself
   if (dir.x === -direction.x && dir.y === -direction.y) return;
   nextDirection = dir;
+}
+
+window.addEventListener("keydown", (e) => {
+  const dir = DIRS[e.key];
+  if (!dir) return;
+  e.preventDefault();
+  setDirection(dir);
 });
 
 restartBtn.addEventListener("click", init);
 startBtn.addEventListener("click", () => {
   startOverlay.classList.add("hide");
   init();
+});
+
+// on-screen d-pad
+document.getElementById("dpad-up").addEventListener("click", () => setDirection({ x: 0, y: -1 }));
+document.getElementById("dpad-down").addEventListener("click", () => setDirection({ x: 0, y: 1 }));
+document.getElementById("dpad-left").addEventListener("click", () => setDirection({ x: -1, y: 0 }));
+document.getElementById("dpad-right").addEventListener("click", () => setDirection({ x: 1, y: 0 }));
+
+// swipe gestures
+let touchStart = null;
+canvas.addEventListener(
+  "touchstart",
+  (e) => {
+    const t = e.touches[0];
+    touchStart = { x: t.clientX, y: t.clientY };
+  },
+  { passive: true }
+);
+
+canvas.addEventListener(
+  "touchmove",
+  (e) => {
+    e.preventDefault();
+  },
+  { passive: false }
+);
+
+canvas.addEventListener("touchend", (e) => {
+  if (!touchStart) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touchStart.x;
+  const dy = t.clientY - touchStart.y;
+  touchStart = null;
+
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    setDirection(dx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
+  } else {
+    setDirection(dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+  }
 });
