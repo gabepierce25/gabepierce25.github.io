@@ -20,7 +20,7 @@ The domain `gabepierce.com` is registered with **Squarespace**, not GitHub or a 
 - There used to be a Squarespace *website* ("Gabe Pierce") connected to this domain. That subscription is **canceled**, but Squarespace has a platform bug/limitation: you cannot fully disconnect a canceled site from a domain via their UI, and you can't delete the site while a domain is attached to it. Support could probably fix this manually, but we found a workaround instead.
 - **The workaround (currently live, and load-bearing — don't undo it without understanding why):** Squarespace's servers still intercept requests to the bare apex domain (`gabepierce.com`) and 301-redirect to `https://www.gabepierce.com/`. Rather than fight that, the site's GitHub Pages `CNAME` file is set to `www.gabepierce.com` (**not** the apex). So: `gabepierce.com` → Squarespace redirect → `www.gabepierce.com` → GitHub Pages. Both URLs work correctly as a result.
 - **If this ever breaks again** (e.g. Squarespace finally fully removes the connection and the apex redirect disappears, or starts behaving differently): `www.gabepierce.com` should still work regardless since that part doesn't depend on Squarespace at all. Diagnose with `curl -sIL https://gabepierce.com` and `curl -sIL https://www.gabepierce.com` and trace where the redirect chain breaks.
-- HTTPS: a Let's Encrypt cert is issued and working for the custom domain. GitHub's "Enforce HTTPS" checkbox was still greyed out as of the last check (repo Settings → Pages) — worth rechecking occasionally and enabling once available, since right now plain `http://` requests are served without a redirect to HTTPS.
+- HTTPS: a Let's Encrypt cert is issued and working for the custom domain. "Enforce HTTPS" (repo Settings → Pages) is being turned on by Gabe manually — once it's on, all `http://` requests redirect to `https://`.
 
 ## Site structure
 
@@ -41,24 +41,22 @@ The domain `gabepierce.com` is registered with **Squarespace**, not GitHub or a 
 - Desktop: 16×16 grid, 50px cells, 800×800 square board.
 - Mobile (`pointer: coarse` media query, checked in both CSS and JS via `matchMedia`): 8×12 grid, 60px cells, 480×720 portrait board — deliberately shaped and sized differently from desktop, tuned down a couple times from an initial "too zoomed in" 6×9 grid.
 - Mobile controls: swipe gestures on the canvas only (an on-screen D-pad was tried and removed — it only responded once a game was already running, felt broken, and ate screen space). Desktop: arrow keys or WASD.
-- Known fixed bug: the global keydown handler used to call `preventDefault()` on WASD regardless of focus, which blocked typing "w/a/s/d" into the leaderboard name field. Fixed by skipping the handler when `e.target.tagName === "INPUT"`.
+- The global keydown handler skips movement keys when `e.target.tagName === "INPUT"` — defensive leftover from when there was a name-entry field (see Leaderboard history below); harmless to keep, no INPUT elements exist on the page currently.
 - Start screen requires clicking "Start Game" (doesn't auto-start on load). Shows a preview of both faces.
 - Score + best score (best persisted in `localStorage`, per-device only). Speed ramps up slightly as score increases; mobile starts and caps slightly slower than desktop.
 
-## Leaderboard (dreamlo)
+## Leaderboard — tried and removed, don't re-attempt the same approach
 
-Shared global high-score leaderboard via **dreamlo.com** — a free, no-account API built for exactly this (arcade-style leaderboards).
+A shared high-score leaderboard was built using **dreamlo.com** (a free, no-account API for arcade-style leaderboards) and shipped briefly, then **removed** after proving unreliable. Context so this isn't re-attempted the same way:
 
-- Public key (read leaderboard): `6a8407818f40bb13506aaddf`
-- Private key (add/delete scores): `PFnobKwHlkeGIYXbaTkgmgDuRmmyqOaEabai_kAEXpKw`
-- **These keys live directly in `snake.js` (client-side, publicly visible via View Source) because there is no backend to hide them behind — that's inherent to a static GitHub Pages site, not an oversight.** Anyone could theoretically use the private key to post fake scores or wipe the board (`.../clear`). Acceptable risk for a fun personal project; not worth standing up a real backend to fix unless it actually becomes a problem.
-- **Important gotcha:** dreamlo's free tier only serves plain `http://`, not `https://` (confirmed by testing — the `https://` version of both the `/add` and `/json` endpoints returns `"ERROR:SSL not enabled for this leaderboard."` with a `200` status, so don't be fooled by the status code alone). Since gabepierce.com is HTTPS-only, calling `http://dreamlo.com` directly gets blocked by browsers as mixed content.
-- **Fix in place:** all dreamlo calls are routed through `https://api.allorigins.win/get?url=<encoded dreamlo url>`, a free public CORS/HTTPS proxy. Use the `/get` endpoint, not `/raw` — `/raw` returned server errors (522) during testing. `/get` wraps the real response in `{"contents": "...", "status": {...}}`, so the actual dreamlo payload needs an extra unwrap/parse step (already handled in `snake.js`'s `dreamloProxyFetch`).
-- This adds noticeable latency (~5-7s per leaderboard read/write) since it's a round-trip through a third-party proxy. There's a 15s client-side timeout (`fetchWithTimeout`) so the UI fails gracefully instead of hanging forever.
-- **If allorigins.win ever goes down**, the leaderboard will stop working (rest of the game is unaffected). Options at that point: swap in a different CORS proxy, or pay dreamlo's one-time fee (~$5, per their site) to enable real SSL on the leaderboard and drop the proxy entirely.
+- dreamlo's free tier only serves plain `http://`, not `https://` (confirmed by testing — the `https://` version of their endpoints returns `"ERROR:SSL not enabled for this leaderboard."` with a `200` status, so status code alone is misleading). Since gabepierce.com is HTTPS, calling `http://dreamlo.com` directly was blocked by browsers as mixed content.
+- Worked around that by routing calls through `https://api.allorigins.win/get?url=...`, a free public CORS/HTTPS proxy. This worked in initial testing (both read and write), but **the proxy itself turned out to be unreliable** — it started intermittently returning Cloudflare `520`/`522` errors within the same day, breaking score submission and leaderboard viewing for the user with no code-level fix available (it's third-party infra we don't control).
+- Rather than depend on a flaky free proxy (or pay dreamlo ~$5 for real SSL just to remove the proxy layer), the whole feature was pulled out. All leaderboard UI (score name-entry field, submit button, "View Leaderboard" buttons/modal) and JS (dreamlo calls, proxy wrapper) were removed from `index.html` and `snake.js`.
+- **If a leaderboard is wanted again**, don't just re-add the same dreamlo+allorigins combo expecting it to hold up — either pay for dreamlo's SSL upfront (removes the proxy dependency entirely), pick a different backend with native HTTPS support (Firebase/Supabase — more setup but far more reliable), or accept a `localStorage`-only per-device leaderboard (no setup, but not shared across visitors).
+- The dreamlo keys that were in use (public `6a8407818f40bb13506aaddf`, private `PFnobKwHlkeGIYXbaTkgmgDuRmmyqOaEabai_kAEXpKw`) still exist and still work if the dreamlo route is ever revisited — no need to regenerate them.
 
 ## Things intentionally decided against
 
-- **Firebase/Supabase for the leaderboard** — real backends, more setup (account, project, security rules) than this project needs. Went with dreamlo instead.
+- **Firebase/Supabase for the leaderboard** — real backends, more setup (account, project, security rules) than felt worth it at the time. Went with dreamlo instead, which then had to be removed (see above).
 - **True background removal ("cutout") on the face photos** — no lightweight tool available for that (`rembg` needs a big ML model download). Used square-crop + circular canvas/CSS clipping instead, which achieves basically the same visual effect without the complexity.
 - **On-screen D-pad for mobile** — replaced with swipe-only controls (see Game details above).
